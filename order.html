@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submit a Render — VisRender</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#2C4A2E;
+  --green-mid:#3D6B40;
+  --green-light:#5A8F5E;
+  --cream:#F7F3EC;
+  --cream-dark:#EDE8DF;
+  --stone:#C8BFA8;
+  --text:#1A1A18;
+  --text-muted:#6B6B5E;
+  --gold:#B8860B;
+  --white:#FFFFFF;
+  --border:rgba(44,74,46,0.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 3rem;background:rgba(247,243,236,0.92);backdrop-filter:blur(10px);border-bottom:0.5px solid var(--border)}
+.nav-logo{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--green);letter-spacing:0.01em;text-decoration:none}
+.nav-logo span{color:var(--green-light);font-style:italic}
+.nav-links{display:flex;gap:2rem;list-style:none}
+.nav-links a{font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;transition:color 0.2s}
+.nav-links a:hover{color:var(--green)}
+
+.page-wrap{max-width:680px;margin:0 auto;padding:9rem 2rem 6rem}
+.page-tag{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--green-light);margin-bottom:1rem}
+.page-title{font-family:'Playfair Display',serif;font-size:clamp(2rem,4vw,3rem);font-weight:400;color:var(--green);line-height:1.1;margin-bottom:0.75rem}
+.page-title em{font-style:italic;color:var(--green-light)}
+.page-sub{font-size:0.95rem;color:var(--text-muted);line-height:1.8;font-weight:300;margin-bottom:3rem}
+
+.order-form{display:flex;flex-direction:column;gap:1.5rem}
+
+.field{display:flex;flex-direction:column;gap:0.4rem}
+.field label{font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);font-weight:500}
+.field input,.field textarea,.field select{padding:0.875rem 1rem;background:var(--white);border:0.5px solid var(--stone);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;width:100%;transition:border-color 0.2s}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--green-light)}
+.field textarea{min-height:120px;resize:vertical}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.field-hint{font-size:0.75rem;color:var(--stone);margin-top:0.2rem}
+
+.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem}
+.style-opt{position:relative}
+.style-opt input{position:absolute;opacity:0;width:0;height:0}
+.style-opt label{display:block;padding:0.75rem 0.5rem;background:var(--white);border:0.5px solid var(--stone);font-size:0.78rem;text-align:center;cursor:pointer;transition:all 0.2s;letter-spacing:0.04em}
+.style-opt input:checked+label{background:var(--green);color:var(--white);border-color:var(--green)}
+.style-opt label:hover{border-color:var(--green-light)}
+
+.upload-box{border:1px dashed var(--stone);padding:2rem;text-align:center;cursor:pointer;transition:border-color 0.2s;background:var(--white);position:relative}
+.upload-box:hover{border-color:var(--green-light)}
+.upload-box input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:1.5rem;margin-bottom:0.5rem;color:var(--stone)}
+.upload-text{font-size:0.85rem;color:var(--text-muted)}
+.upload-sub{font-size:0.72rem;color:var(--stone);margin-top:0.25rem;font-family:'DM Mono',monospace;letter-spacing:0.05em}
+.upload-preview{display:none;margin-top:1rem;font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--green-mid);letter-spacing:0.05em}
+
+.price-note{background:var(--green);color:var(--white);padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.price-note-text{font-size:0.85rem;line-height:1.5}
+.price-note-text strong{font-family:'Playfair Display',serif;font-size:1.2rem}
+.price-note-tag{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;color:rgba(247,243,236,0.6);text-transform:uppercase}
+
+.submit-btn{padding:1rem 2.5rem;background:var(--green);color:var(--white);font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:pointer;transition:background 0.2s;align-self:flex-start}
+.submit-btn:hover{background:var(--green-mid)}
+.submit-btn:disabled{opacity:0.5;cursor:not-allowed}
+
+.success-state{display:none;text-align:center;padding:3rem 2rem;background:var(--white);border:0.5px solid var(--border)}
+.success-icon{font-size:2.5rem;margin-bottom:1rem;color:var(--green)}
+.success-title{font-family:'Playfair Display',serif;font-size:1.75rem;color:var(--green);margin-bottom:0.75rem}
+.success-body{font-size:0.9rem;color:var(--text-muted);line-height:1.8;font-weight:300}
+
+.divider{height:0.5px;background:var(--border)}
+
+@media(max-width:600px){
+  nav{padding:1rem 1.25rem}
+  .page-wrap{padding:7rem 1.25rem 4rem}
+  .field-row{grid-template-columns:1fr}
+  .style-grid{grid-template-columns:repeat(2,1fr)}
+  .price-note{flex-direction:column;gap:0.5rem}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Vis<span>Render</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html#how">How it works</a></li>
+    <li><a href="index.html#pricing">Pricing</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+  <p class="page-tag">Submit your order</p>
+  <h1 class="page-title">Let's build your<br><em>visualisation</em></h1>
+  <p class="page-sub">Fill in the details below and upload a photo of your customer's garden. We'll have a photorealistic before &amp; after render back to you within 24 hours.</p>
+
+  <div class="price-note">
+    <div>
+      <div class="price-note-tag">First render</div>
+      <div class="price-note-text"><strong>Completely free</strong> — no card required</div>
+    </div>
+    <div>
+      <div class="price-note-tag">After that</div>
+      <div class="price-note-text"><strong>£20</strong> per render</div>
+    </div>
+  </div>
+
+  <br>
+
+  <form class="order-form" name="render-order" method="POST" data-netlify="true" enctype="multipart/form-data" id="order-form">
+    <input type="hidden" name="form-name" value="render-order">
+
+    <div class="divider"></div>
+    <p style="font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted)">Your details</p>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="company">Company name</label>
+        <input type="text" id="company" name="company" placeholder="Green Gardens Ltd" required>
+      </div>
+      <div class="field">
+        <label for="name">Your name</label>
+        <input type="text" id="name" name="name" placeholder="James Smith" required>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" placeholder="james@greengardens.co.uk" required>
+        <span class="field-hint">We'll send the render here</span>
+      </div>
+      <div class="field">
+        <label for="phone">Phone (optional)</label>
+        <input type="tel" id="phone" name="phone" placeholder="07700 900000">
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <p style="font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted)">The garden</p>
+
+    <div class="field">
+      <label>Garden style</label>
+      <div class="style-grid">
+        <div class="style-opt"><input type="checkbox" name="style" value="Modern / Contemporary" id="s1"><label for="s1">Modern</label></div>
+        <div class="style-opt"><input type="checkbox" name="style" value="Cottage / Traditional" id="s2"><label for="s2">Cottage</label></div>
+        <div class="style-opt"><input type="checkbox" name="style" value="Mediterranean" id="s3"><label for="s3">Mediterranean</label></div>
+        <div class="style-opt"><input type="checkbox" name="style" value="Japanese / Zen" id="s4"><label for="s4">Japanese / Zen</label></div>
+        <div class="style-opt"><input type="checkbox" name="style" value="Family-friendly" id="s5"><label for="s5">Family-friendly</label></div>
+        <div class="style-opt"><input type="checkbox" name="style" value="Natural / Wildlife" id="s6"><label for="s6">Natural</label></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="description">What does the customer want?</label>
+      <textarea id="description" name="description" placeholder="e.g. Replace the lawn with porcelain slabs, add raised wooden planters along the left fence, keep the existing apple tree. Customer wants a low-maintenance feel." required></textarea>
+      <span class="field-hint">The more detail the better — include materials, colours, features to keep or remove</span>
+    </div>
+
+    <div class="field">
+      <label>Garden photo</label>
+      <div class="upload-box" id="upload-box">
+        <input type="file" name="photo" id="photo-input" accept="image/jpeg,image/png,image/webp" required>
+        <div class="upload-icon">&#x1F4F7;</div>
+        <div class="upload-text">Click to upload or drag &amp; drop</div>
+        <div class="upload-sub">JPG, PNG or WEBP · Max 10MB</div>
+        <div class="upload-preview" id="upload-preview"></div>
+      </div>
+      <span class="field-hint">One clear photo of the garden taken from a standing position works best</span>
+    </div>
+
+    <div class="field">
+      <label for="notes">Anything else to know? (optional)</label>
+      <textarea id="notes" name="notes" placeholder="e.g. Customer has a tight budget so keep it simple, or there's a utility box that must stay in position..."></textarea>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submit-btn">Submit my order &rarr;</button>
+  </form>
+
+  <div class="success-state" id="success-state">
+    <div class="success-icon">&#10003;</div>
+    <div class="success-title">Order received</div>
+    <div class="success-body">
+      Thanks — we've got your garden photo and brief.<br>
+      Your render will be in your inbox within <strong>24 hours</strong>.<br><br>
+      Questions? Email us at <a href="mailto:hello@visrender.co.uk" style="color:var(--green)">hello@visrender.co.uk</a>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('photo-input').addEventListener('change', function() {
+  var file = this.files[0];
+  if (file) {
+    var preview = document.getElementById('upload-preview');
+    preview.textContent = '✓ ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + 'MB)';
+    preview.style.display = 'block';
+    document.getElementById('upload-box').style.borderColor = 'var(--green-light)';
+  }
+});
+
+document.getElementById('order-form').addEventListener('submit', function(e) {
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+});
+</script>
+</body>
+</html>

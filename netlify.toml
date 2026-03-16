@@ -1,0 +1,25 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+[forms]
+  # Waitlist form notifications
+  [[forms.notifications]]
+    event = "submission"
+    type = "email"
+    formName = "waitlist"
+    to = "hello@visrender.co.uk"
+    subject = "New VisRender waitlist signup"
+
+  # Order form notifications
+  [[forms.notifications]]
+    event = "submission"
+    type = "email"
+    formName = "render-order"
+    to = "hello@visrender.co.uk"
+    subject = "New render order — action required"

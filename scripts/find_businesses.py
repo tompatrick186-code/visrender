@@ -1,155 +1,162 @@
 """
-VisRender — Business Finder
-Finds UK landscaping/gardening businesses using Google Places API
-and saves them to a CSV for outreach.
+VisRender — Business Finder (DuckDuckGo)
+Finds UK landscaping businesses by scraping DuckDuckGo search results.
+No API key required — completely free.
 
 Setup:
-  pip install requests
-  Set GOOGLE_API_KEY in config.py
+  pip3 install requests beautifulsoup4
 
 Usage:
-  python find_businesses.py
-  python find_businesses.py --location "Manchester" --radius 30000
+  python3 find_businesses.py
+  python3 find_businesses.py --location "Manchester"
+  python3 find_businesses.py --location "Bristol" --output bristol.csv
 """
 
 import requests
+from bs4 import BeautifulSoup
 import csv
 import time
 import argparse
-import os
-from config import GOOGLE_API_KEY
+import re
+from urllib.parse import urlparse, unquote
 
-PLACES_NEARBY_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-PLACES_DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json"
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-GB,en;q=0.9",
+}
 
-# UK cities to search — expand as needed
-DEFAULT_LOCATIONS = [
-    ("London",       51.5074, -0.1278),
-    ("Manchester",   53.4808, -2.2426),
-    ("Birmingham",   52.4862, -1.8904),
-    ("Leeds",        53.8008, -1.5491),
-    ("Glasgow",      55.8642, -4.2518),
-    ("Bristol",      51.4545, -2.5879),
-    ("Edinburgh",    55.9533, -3.1883),
-    ("Sheffield",    53.3811, -1.4701),
-    ("Liverpool",    53.4084, -2.9916),
-    ("Nottingham",   52.9548, -1.1581),
-]
-
-SEARCH_KEYWORDS = [
-    "landscaping company",
-    "landscape gardener",
-    "garden design",
-    "garden maintenance",
+UK_CITIES = [
+    "London", "Manchester", "Birmingham", "Leeds", "Glasgow",
+    "Bristol", "Edinburgh", "Sheffield", "Liverpool", "Nottingham",
+    "Cardiff", "Leicester", "Southampton", "Brighton", "Newcastle",
+    "Oxford", "Cambridge", "Exeter", "Norwich", "York",
 ]
 
 
-def search_places(lat, lng, keyword, radius=25000):
-    """Search for businesses near a location."""
+def ddg_search(query):
+    """Scrape DuckDuckGo HTML results for a query."""
     results = []
-    params = {
-        "location": f"{lat},{lng}",
-        "radius": radius,
-        "keyword": keyword,
-        "type": "establishment",
-        "key": GOOGLE_API_KEY,
-    }
+    url = "https://html.duckduckgo.com/html/"
+    data = {"q": query, "kl": "uk-en"}
 
-    while True:
-        resp = requests.get(PLACES_NEARBY_URL, params=params, timeout=10)
-        data = resp.json()
+    resp = requests.post(url, data=data, headers=HEADERS, timeout=15)
+    if resp.status_code != 200:
+        return results
 
-        if data.get("status") not in ("OK", "ZERO_RESULTS"):
-            print(f"  API error: {data.get('status')} — {data.get('error_message', '')}")
-            break
+    soup = BeautifulSoup(resp.text, "html.parser")
+    for result in soup.select(".result__body"):
+        title_el = result.select_one(".result__title a")
+        snippet_el = result.select_one(".result__snippet")
+        url_el = result.select_one(".result__url")
 
-        results.extend(data.get("results", []))
+        if not title_el:
+            continue
 
-        next_token = data.get("next_page_token")
-        if not next_token:
-            break
+        title = title_el.get_text(strip=True)
+        snippet = snippet_el.get_text(strip=True) if snippet_el else ""
+        href = title_el.get("href", "")
 
-        # Google requires a short delay before using next_page_token
-        time.sleep(2)
-        params = {"pagetoken": next_token, "key": GOOGLE_API_KEY}
+        # Extract real URL from DDG redirect
+        website = ""
+        if "uddg=" in href:
+            match = re.search(r"uddg=([^&]+)", href)
+            if match:
+                website = unquote(match.group(1))
+        elif href.startswith("http"):
+            website = href
+
+        # Skip directories, social media, job sites
+        skip_domains = ["yell.com", "checkatrade.com", "facebook.com",
+                        "linkedin.com", "indeed.com", "reed.co.uk",
+                        "bark.com", "yelp.com", "trustpilot.com"]
+        if any(d in website for d in skip_domains):
+            continue
+
+        # Try to extract a phone number from the snippet
+        phone_match = re.search(r"(\b0[0-9]{4}\s?[0-9]{3}\s?[0-9]{3,4}\b|\b07[0-9]{9}\b)", snippet)
+        phone = phone_match.group(0) if phone_match else ""
+
+        results.append({
+            "name":    title,
+            "snippet": snippet,
+            "website": website,
+            "phone":   phone,
+        })
 
     return results
 
 
-def get_place_details(place_id):
-    """Get email, website and phone for a place."""
-    params = {
-        "place_id": place_id,
-        "fields": "name,formatted_phone_number,website,formatted_address,url",
-        "key": GOOGLE_API_KEY,
-    }
-    resp = requests.get(PLACES_DETAILS_URL, params=params, timeout=10)
-    return resp.json().get("result", {})
+def derive_email(website):
+    """Guess a likely contact email from a domain."""
+    if not website:
+        return ""
+    try:
+        domain = urlparse(website).netloc.replace("www.", "")
+        if domain and "." in domain:
+            return f"info@{domain}"
+    except Exception:
+        pass
+    return ""
 
 
-def find_businesses(locations=None, radius=25000, output_file="businesses.csv"):
+def find_businesses(locations=None, output_file="businesses.csv"):
     if locations is None:
-        locations = DEFAULT_LOCATIONS
+        locations = UK_CITIES
 
-    seen_ids = set()
-    rows = []
+    all_rows = []
+    seen_websites = set()
 
-    for city_name, lat, lng in locations:
-        print(f"\nSearching {city_name}...")
-        for keyword in SEARCH_KEYWORDS:
-            print(f"  Keyword: {keyword}")
-            places = search_places(lat, lng, keyword, radius)
-            print(f"  Found {len(places)} results")
+    for city in locations:
+        print(f"\nSearching {city}...")
+        queries = [
+            f"landscaping company {city} UK",
+            f"landscape gardener {city} UK",
+            f"garden design {city} UK",
+        ]
 
-            for place in places:
-                pid = place.get("place_id")
-                if pid in seen_ids:
+        for query in queries:
+            results = ddg_search(query)
+            print(f"  '{query}': {len(results)} results")
+
+            for r in results:
+                site = r["website"].lower().strip("/")
+                if site and site in seen_websites:
                     continue
-                seen_ids.add(pid)
+                if site:
+                    seen_websites.add(site)
 
-                print(f"    Getting details for: {place.get('name')}")
-                details = get_place_details(pid)
-                time.sleep(0.1)  # stay well within rate limits
-
-                rows.append({
-                    "name":     details.get("name", place.get("name", "")),
-                    "address":  details.get("formatted_address", ""),
-                    "phone":    details.get("formatted_phone_number", ""),
-                    "website":  details.get("website", ""),
-                    "maps_url": details.get("url", ""),
-                    "city":     city_name,
-                    "emailed":  "no",
+                email = derive_email(r["website"])
+                all_rows.append({
+                    "name":    r["name"],
+                    "website": r["website"],
+                    "email":   email,
+                    "phone":   r["phone"],
+                    "city":    city,
+                    "emailed": "no",
                 })
 
-    # Write CSV
-    fieldnames = ["name", "address", "phone", "website", "maps_url", "city", "emailed"]
+            time.sleep(2)  # be polite between searches
+
+    fieldnames = ["name", "website", "email", "phone", "city", "emailed"]
     with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(all_rows)
 
-    print(f"\nDone. {len(rows)} businesses saved to {output_file}")
+    print(f"\nDone. {len(all_rows)} businesses saved to {output_file}")
     return output_file
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Find UK landscaping businesses")
-    parser.add_argument("--location", help="Single city name to search")
-    parser.add_argument("--radius", type=int, default=25000, help="Search radius in metres")
-    parser.add_argument("--output", default="businesses.csv", help="Output CSV filename")
+    parser = argparse.ArgumentParser(description="Find UK landscaping businesses via DuckDuckGo")
+    parser.add_argument("--location", help="City to search (e.g. Bristol)")
+    parser.add_argument("--output", default="businesses.csv")
     args = parser.parse_args()
 
-    if args.location:
-        # Geocode the custom location
-        geo_url = "https://maps.googleapis.com/maps/api/geocode/json"
-        geo = requests.get(geo_url, params={"address": args.location + " UK", "key": GOOGLE_API_KEY}).json()
-        if geo.get("results"):
-            loc = geo["results"][0]["geometry"]["location"]
-            locations = [(args.location, loc["lat"], loc["lng"])]
-        else:
-            print("Could not geocode location. Using defaults.")
-            locations = None
-    else:
-        locations = None
-
-    find_businesses(locations=locations, radius=args.radius, output_file=args.output)
+    locations = [args.location] if args.location else None
+    find_businesses(locations=locations, output_file=args.output)

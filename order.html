@@ -215,7 +215,7 @@ document.getElementById('order-form').addEventListener('submit', function(e) {
 
   var formData = new FormData(this);
 
-  fetch('RAILWAY_URL_PLACEHOLDER/order', {
+  fetch('https://visrender-production.up.railway.app/order', {
     method: 'POST',
     body: formData
   })

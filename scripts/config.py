@@ -12,4 +12,4 @@ FROM_EMAIL = "hello@visrender.co.uk"
 FROM_NAME  = "Tom at VisRender"
 
 # Stability AI API key
-STABILITY_API_KEY = "sk-3HXgrijDhOvKb435tY9LXJoZD09XrmL2BCKsNxArZ09jBQkC"
+STABILITY_API_KEY = "sk-NAussdbpFh4qhFObWh0SeKmFzKRPDzzbH6NhJB2BtDoUWmTb"

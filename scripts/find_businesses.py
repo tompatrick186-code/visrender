@@ -18,6 +18,7 @@ import csv
 import time
 import argparse
 import re
+import random
 from urllib.parse import urlparse, unquote
 
 HEADERS = {
@@ -44,7 +45,11 @@ def ddg_search(query):
     url = "https://html.duckduckgo.com/html/"
     data = {"q": query, "kl": "uk-en"}
 
-    resp = requests.post(url, data=data, headers=HEADERS, timeout=15)
+    for attempt in range(3):
+        resp = requests.post(url, data=data, headers=HEADERS, timeout=15)
+        if resp.status_code == 200:
+            break
+        time.sleep(random.uniform(10, 20))
     if resp.status_code != 200:
         return results
 
@@ -140,7 +145,7 @@ def find_businesses(locations=None, output_file="businesses.csv"):
                     "emailed": "no",
                 })
 
-            time.sleep(2)  # be polite between searches
+            time.sleep(random.uniform(6, 10))  # avoid rate limiting
 
     fieldnames = ["name", "website", "email", "phone", "city", "emailed"]
     with open(output_file, "w", newline="", encoding="utf-8") as f:

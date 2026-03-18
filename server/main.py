@@ -22,8 +22,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-STABILITY_API_KEY = os.environ["STABILITY_API_KEY"]
-RESEND_API_KEY    = os.environ["RESEND_API_KEY"]
+STABILITY_API_KEY = os.environ["STABILITY_API_KEY"].strip()
+RESEND_API_KEY    = os.environ["RESEND_API_KEY"].strip()
 FROM_EMAIL        = "hello@visrender.co.uk"
 FROM_NAME         = "Tom at VisRender"
 NOTIFY_EMAIL      = "hello@visrender.co.uk"

@@ -82,8 +82,6 @@ body{{font-family:Georgia,serif;background:#F7F3EC;margin:0;padding:0}}
 .logo{{font-size:22px;color:#fff}}.logo span{{color:#5A8F5E;font-style:italic}}
 .body{{padding:36px;color:#1A1A18;font-size:15px;line-height:1.75}}
 .body p{{margin:0 0 16px}}
-.label{{font-family:sans-serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9e9e8e;margin:8px 0 4px}}
-.img-wrap{{margin-bottom:24px}}.img-wrap img{{width:100%;display:block}}
 .footer{{padding:20px 36px;border-top:1px solid #e8e2d8;font-family:sans-serif;font-size:11px;color:#9e9e8e}}
 .footer a{{color:#5A8F5E}}
 </style></head><body>
@@ -91,12 +89,9 @@ body{{font-family:Georgia,serif;background:#F7F3EC;margin:0;padding:0}}
 <div class="header"><div class="logo">Vis<span>Render</span></div></div>
 <div class="body">
 <p>Hi {first},</p>
-<p>Your garden render is ready. Here's the before &amp; after for: <em>{short_desc}</em></p>
-<div class="img-wrap"><div class="label">Before</div>
-<img src="data:image/jpeg;base64,{before_b64}" alt="Before"></div>
-<div class="img-wrap"><div class="label">After — VisRender</div>
-<img src="data:image/jpeg;base64,{after_b64}" alt="After render"></div>
-<p>Show this to your customer at your next meeting. If you'd like any changes —
+<p>Your garden render is ready for: <em>{short_desc}</em></p>
+<p>I've attached two images to this email — <strong>before.jpg</strong> (your original photo) and <strong>render.jpg</strong> (the AI visualisation).</p>
+<p>Show the render to your customer at your next meeting. If you'd like any changes —
 different materials, colours or style — just reply and we'll update it within 24 hours.</p>
 <p>Ready for your next render?<br>
 <a href="https://visrender.co.uk/order.html" style="color:#2C4A2E">visrender.co.uk/order.html</a></p>
@@ -111,6 +106,10 @@ different materials, colours or style — just reply and we'll update it within 
         "to":      [to_email],
         "subject": "Your garden render is ready — VisRender",
         "html":    html,
+        "attachments": [
+            {"filename": "before.jpg", "content": before_b64},
+            {"filename": "render.jpg", "content": after_b64},
+        ],
     })
 
 

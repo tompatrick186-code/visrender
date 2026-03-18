@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-STABILITY_API_KEY = os.environ["STABILITY_API_KEY"].strip()
+STABILITY_API_KEY = "sk-F1VqkKWw9m6hLcJUn3TxX0a6Bm71t5DOvC4Dg2sZowpJFjcI"
 RESEND_API_KEY    = os.environ["RESEND_API_KEY"].strip()
 FROM_EMAIL        = "hello@visrender.co.uk"
 FROM_NAME         = "Tom at VisRender"

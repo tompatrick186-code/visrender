@@ -173,3 +173,17 @@ async def receive_order(
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/debug-key")
+def debug_key():
+    key = os.environ.get("STABILITY_API_KEY", "NOT SET")
+    cleaned = key.strip()
+    return {
+        "raw_length": len(key),
+        "cleaned_length": len(cleaned),
+        "starts_with": cleaned[:8] if len(cleaned) >= 8 else cleaned,
+        "ends_with": cleaned[-4:] if len(cleaned) >= 4 else cleaned,
+        "has_spaces": " " in key,
+        "has_newline": "\n" in key or "\r" in key,
+    }

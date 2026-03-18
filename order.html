@@ -115,7 +115,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 
   <br>
 
-  <form class="order-form" name="render-order" method="POST" data-netlify="true" enctype="multipart/form-data" id="order-form">
+  <form class="order-form" id="order-form" enctype="multipart/form-data">
     <input type="hidden" name="form-name" value="render-order">
 
     <div class="divider"></div>
@@ -208,9 +208,27 @@ document.getElementById('photo-input').addEventListener('change', function() {
 });
 
 document.getElementById('order-form').addEventListener('submit', function(e) {
+  e.preventDefault();
   var btn = document.getElementById('submit-btn');
   btn.disabled = true;
   btn.textContent = 'Sending...';
+
+  var formData = new FormData(this);
+
+  fetch('RAILWAY_URL_PLACEHOLDER/order', {
+    method: 'POST',
+    body: formData
+  })
+  .then(function(r) { return r.json(); })
+  .then(function() {
+    document.getElementById('order-form').style.display = 'none';
+    document.getElementById('success-state').style.display = 'block';
+  })
+  .catch(function() {
+    btn.disabled = false;
+    btn.textContent = 'Submit my order →';
+    alert('Something went wrong — please try again or email hello@visrender.co.uk');
+  });
 });
 </script>
 </body>
